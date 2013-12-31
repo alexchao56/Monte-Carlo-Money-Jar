@@ -27,120 +27,122 @@ Once within python, from the folder containing this file:
 import random, math
 import numpy
 
-# define a global dictionary for coin values
-values = {"pennies": 0.01, "nickels": 0.05, "dimes": 0.10, "quarters":0.25} 
+# define a global dictionary for values of the coins
+val = {"nickels": 0.05, "quarters": 0.25, "dimes": 0.10, "pennies": 0.01}
 
 class CookieJar:
     """
-    Does the work
+    Where the work is done
     """
-    ## set contents at init to nothing
-    # remove quarters every 1 week
-    remove_quarters_freq = 7
-    # how many quarters to remove
-    num_quarters_to_remove = 8
-
-    def __init__(self, transactions_per_day=8, num_days_til_fill=365, remove_quarters=False,\
-              print_summary_each_week=False, print_summary_each_transaction=False):
-        self.contents = {"quarters":0, "dimes":0, "nickels":0, "pennies":0}
+    ## set the contents upon create to nothing
+    remove_quarters_freq=7 # remove quarters every 1 week
+    num_quarters_to_remove=8    # how many quarters to remove
+    
+    def __init__(self,transactions_per_day=8,number_of_days_until_fill=365,deplete_quarters=False,\
+                print_summary_every_week=False,print_summary_of_every_transaction=False):
+        
+        self.contents = {"quarters": 0, "dimes": 0, "nickels": 0, "pennies": 0}
         self.final_value = self._content_value(self.contents)
         self.final_contents = self.contents
         self.num_transactions_performed = 0
         self.day = 0
         self.days_to_reach_500_pennies = -1
-
-        self.print_summary_each_transaction = print_summary_each_transaction
-        self.print_summary_each_week = print_summary_each_week
-        self. transactions_per_day = transactions_per_day
-        self.num_days_til_fill = num_days_til_fill
-        self.remove_quarters = remove_quarters
-
+        
+        self.print_summary_of_every_transaction = print_summary_of_every_transaction
+        self.print_summary_every_week = print_summary_every_week
+        self.transactions_per_day = transactions_per_day
+        self.number_of_days_until_fill=number_of_days_until_fill
+        self.deplete_quarters = deplete_quarters
+        
     def fill_up(self):
         """
-        The engine that runs all the transactions and accumulates
-        final resuls for the cookie jar.
+        the main engine, it runs all the transactions and accumulates final results for this cookie jar
         """
-        while self.day < self.num_days_til_fill:
-            if self.print_summary_each_week:
+        while self.day < self.number_of_days_until_fill:
+            if self.print_summary_every_week:
                 print "Day %i" % (self.day + 1)
-            self.perform_days_worth_transactions()
+            self.perform_a_days_worth_of_transactions()
             self.day += 1
             if self.contents["pennies"] > 500 and self.days_to_reach_500_pennies == -1:
                 self.days_to_reach_500_pennies = self.day
-            if self.day % self.remove_quarters_freq == 0 and self.remove_quarters:
-                self.contents["quarters"] = max(0, self.contents["quarters"] - self.num_quarters_to_remove)
-
+            if self.day % self.remove_quarters_freq == 0 and self.deplete_quarters:
+                self.contents["quarters"] = max(0,self.contents["quarters"] - self.num_quarters_to_remove)
+       
         #print "all done after %i transactions" % self.num_transactions_performed
-        self.final_value = self._content_value(self.contents)
+        self.final_value    = self._content_value(self.contents)
         self.final_contents = self.contents
-        self.final_order = self._order(self.contents)
-
+        self.final_order    = self._order(self.contents)
+        
     def __str__(self):
         """
-        Print a summary of yourself
+        print a summary of yourself
         """
-        a = "Value %.2f after %i transactions performed." % (self.final_value, self.num_transactions_performed)
-        a += " days to reach 500 pennies: %i" % self.days_to_reach_500_pennies
+        a = "Value %.2f after %i transactions performed." % (self.final_value,self.num_transactions_performed)
+        a += "  days to reach 500 pennies: %i" % self.days_to_reach_500_pennies
         return a
-
-    def _order(self, purse):
+    
+    def _order(self,purse):
         """
-        Determine the ordering of number of coins in the purse.
-        Here, the purse is assumed to be a dictionary of coins.
+        determine the ordering of number of coins in the purse.
+        here the purse is assumed to be a dictionary like 
+           {"nickels": 0, "quarters": 12, "dimes": 3, "pennies": 32}
+        returns
+           {1: "pennies", 2: "quarters", 3: "dimes", 4: "nickels"}   
         """
-        tmp = [(v, k) for k, v in purse.iteritems()]
+        tmp = [(v,k) for k,v in purse.iteritems()]
         tmp.sort(reverse=True)
-        return dict([(i+1, tmp[i][1]) for i in range(len(tmp))])
-
-    def _content_value(self, purse):
+        return dict([(i+1,tmp[i][1]) for i in range(len(tmp))])
+        
+    def _content_value(self,purse):
         """
-        Determine the value of coins in the purse.
-        Here, the purse is assumed to be a dictionary of coins.
+        determine the value of coins in the purse.
+        here the purse is assumed to be a dictionray like 
+           {"nickels": 0, "quarters": 12, "dimes": 3, "pennies": 32}
         """
         rez = 0.0
         for k in purse.keys():
-            rez += values[k]*purse[k]
+            rez += val[k]*purse[k]
         return rez
-
-    def best_change(self, cost, contents, verbose=False):
+    
+    def best_change(self,cost,contents,verbose=False):
         """
-        For a given transaction cost, determines the best combination of coins
-        that gives as close to the exact change amount needed as possible given the contents
-        of a purse.
-
-        Returns a tuple where the first element is False if the contents of the purse cannot
-        cover the change cost, True if it cannot
-
-        The second element is a dictionary showing how much of each coin type is required to
-        make the transaction as close to $x.00 as possible
-
-        This is a nested for loop, trying out all combinations
+        for given transaction cost determines the best combination of coins that
+         gives as close to the exact change amount needed as possible given the contents of a purse
+         
+         returns a tuple where the first element is False if the contents of the purse cannot
+          cover the change cost, True if it can
+          
+          the second element is a dict showing how much of each coin type is required to make the transaction
+           as close to $x.00 as possible
+         
+         This is a large 4x nested for loop, trying out all combinations
+          
         """
         cost_in_cents = cost % 1.0
         if cost_in_cents > self._content_value(contents):
-            #we would not have enough, purse value is less than the cost in cents
-            return (False, {})
-
+            # there's no way we have enough...our purse value is less than the cost in cents 
+            return (False,{})
+        
         exact = False
-        best_difference = 1.00
+        best_diff = 1.00
         best = {}
         for q in range(contents["quarters"] + 1):
             for d in range(contents["dimes"] + 1):
                 for n in range(contents["nickels"] + 1):
                     for p in range(contents["pennies"] + 1):
-                        v = round(q*0.25 + d*0.10 + n*0.05 + p*0.01, 2)
+                        v = round(q*0.25 + d*0.10 + n*0.05 + p*0.01,2)
                         if verbose:
-                            print "val",p,n,d,q,v,cost_in_cents,best_difference
+                            print "val",p,n,d,q,v,cost_in_cents,best_diff
                         if abs(v - cost_in_cents) < 0.005:
                             ## this is within the tolerance of a floating point difference
-                            best_difference = 0.0 
-                            best = {"nickels": n, "dimes": d, "pennies": p, "quarters": q}
-                            exact = True
+                            best_diff = 0.0 
+                            best      = {"nickels": n, "dimes": d, "pennies": p, "quarters": q}
+                            exact     = True
                             break
-                        elif (v - cost_in_cents) > 0.0 and (v - cost_in_cents) < best_difference:
-                            best_difference = (v - cost_in_cents)
-                            best = {"nickels": n, "dimes": d, "pennies": p, "quarters": q}
-                            exact = False
+                        elif (v - cost_in_cents) > 0.0 and (v - cost_in_cents) < best_diff:
+                            best_diff = (v - cost_in_cents)
+                            best      = {"nickels": n, "dimes": d, "pennies": p, "quarters": q}
+                            exact     = False
                     if exact:
                         break
                 if exact:
@@ -148,31 +150,32 @@ class CookieJar:
             if exact:
                 break
         return (True,best)
-
-    def perform_days_worth_transactions(self):
+                        
+    def perform_a_days_worth_of_transactions(self):
         """
-        Loop over all the transactions in the day keeping track of the number of coins of each type 
-        in the purse. The random cost of a transaction is set to be:
-        cost = round(random.random()*50,2)
+        loop over all the transactions in the day keeping track of the number of coins of each type in the purse.
+         The random cost of a transaction is set to be:
+         cost = round(random.random()*50,2)
         """
         #initialize how much money we have in our pockets
-        pocket_contents = {"nickels":0, "quarters":0, "dimes":0, "pennies":0}
+        pocket_contents = {"nickels": 0, "quarters": 0, "dimes": 0, "pennies": 0}
         n_exact = 0
         for i in xrange(self.transactions_per_day):
-            #Assume a transaction cost of $0 to $50
-            #Round to the nearest cent
-            cost = round(random.random()*50, 2) 
-            if self.print_summary_each_transaction:
+            
+            cost = round(random.random()*50,2)   # assume a transaction cost of $0 - $50
+                                                 # round to the nearest cent
+            
+            if self.print_summary_of_every_transaction:
                 print "Day %i, transaction %i" % (self.day + 1,i + 1)
                 print "  pocket_contents = %s" % repr(pocket_contents)
                 print "  cost = $%.2f" % cost
-
-            ##do I have exact change?
+            
+            ## do I have exact change?
             got_enough = self.best_change(cost,pocket_contents)            
             if got_enough[0]:
                 ## we have enough change and it might just enough to get us where we need to be
                 ## That is the cost + this change ends in .00. So, subtract the value to the cost
-                cost -= sum([got_enough[1][x]*values[x] for x in values.keys()])
+                cost -= sum([got_enough[1][x]*val[x] for x in val.keys()])
                 
                 ## now remove all that from our purse
                 for k,v in got_enough[1].iteritems():
@@ -186,21 +189,22 @@ class CookieJar:
                 if v != 0:
                     pocket_contents[k] += v
             self.num_transactions_performed += 1
-
-            if self.print_summary_each_transaction:
-                print "  end the end of the day: pocket_contents = %s" % repr(pocket_contents)
-            print "      we had %i exact change times out of %i transactions" % (n_exact, self.transactions_per_day)
-
-            ## dump what we have into the cookie jar at the end of the day
-            for k in self.contents.keys():
-                self.contents[k] += pocket_contents[k]
-
-    def calc_change(self, transaction_amount):
+            
+        if self.print_summary_of_every_transaction:
+            print "  end the end of the day: pocket_contents = %s" % repr(pocket_contents)
+            print "      we had %i exact change times out of %i transactions" % (n_exact,self.transactions_per_day)
+        
+        ## dump what we have into the cookie jar at the end of the day
+        for k in self.contents.keys():
+            self.contents[k] += pocket_contents[k]
+                
+    def calc_change(self,transaction_amount):
         """
-        For a given transaction amount, determines how many coins of each type to return
+        for a given transaction amount, determines how many coins of each type to return
         """
-        change = 1.0 - (transaction_amount % 1.0) #number from 0.0 to 0.99
-        change_in_cents = int(round(change*100.0) % 100) ##make from 0 to 99 as int
+        change          = 1.0 - (transaction_amount % 1.0)  # make this a number from 0.0 - 0.99
+        change_in_cents = int(round(change*100.0) % 100)        ## make from 0 - 99 as type int
+        
         #print "change",change,"change_in_cents",change_in_cents
         oring_change_in_cents = change_in_cents
         n_quarters = change_in_cents / 25      ## since this is int / int we'll get back an int
@@ -210,15 +214,18 @@ class CookieJar:
         n_nickels = change_in_cents / 5
         change_in_cents -= n_nickels*5
         n_pennies = change_in_cents
-        if self.print_summary_each_transaction:
+        if self.print_summary_of_every_transaction:
             print "  Transaction is $%.2f (coin change was %i cents)" % (transaction_amount ,oring_change_in_cents)
             print "     %s: quarters: %i dimes: %i nickels: %i pennies: %i" % ("returned", \
-                                                                            n_quarters ,n_dimes,n_nickels,n_pennies)
+                                                                               n_quarters ,n_dimes,n_nickels,n_pennies)
                                                                                
             print "*" * 40
         return {"nickels": n_nickels, "quarters": n_quarters, "dimes": n_dimes, "pennies": n_pennies}
 
+
+
 def simulate():
+    
     """performs the monte carlo, making many instances of CookieJars under different assumptions."""
     ## a: What is the average total amount of change accumulated each year (assume X=5)? 
     #     What is the 1-sigma scatter about this quantity?
@@ -228,7 +235,7 @@ def simulate():
     
     jars = []
     for j in xrange(njars):
-        jars.append(CookieJar(transactions_per_day=5,num_days_til_fill=365,remove_quarters=False))
+        jars.append(CookieJar(transactions_per_day=5,number_of_days_until_fill=365,deplete_quarters=False))
         jars[-1].fill_up()
 
     fin = numpy.array([x.final_value for x in jars])
@@ -261,10 +268,10 @@ def simulate():
     for tr in [2,10,20]:
         jars = []
         for j in xrange(50):
-            jars.append(CookieJar(transactions_per_day=tr,num_days_til_fill=365,remove_quarters=False))
+            jars.append(CookieJar(transactions_per_day=tr,number_of_days_until_fill=365,deplete_quarters=False))
             jars[-1].fill_up()
         
-        first = {"nickels": 0, "quarters": 0, "dimes": 0, "pennies":0}
+        first  = {"nickels": 0, "quarters": 0, "dimes": 0, "pennies":0}
         second = {"nickels": 0, "quarters": 0, "dimes": 0, "pennies":0}
         for j in jars:
             first[j.final_order[1]] += 1
@@ -278,7 +285,7 @@ def simulate():
     ## (if you do not have enough quarters at the end of each week, use only what you have).
     jars = []
     for j in xrange(50):
-        jars.append(CookieJar(transactions_per_day=5,num_days_til_fill=365,remove_quarters=True))
+        jars.append(CookieJar(transactions_per_day=5,number_of_days_until_fill=365,deplete_quarters=True))
         jars[-1].fill_up()
     nq = 0
     for j in jars:
@@ -291,7 +298,6 @@ def simulate():
     print "average # of quarters left after a year:",nq/len(jars)
     # answer = 28
     print "-"*50
-
+    
 if __name__ == "__main__":
     simulate()
-            
