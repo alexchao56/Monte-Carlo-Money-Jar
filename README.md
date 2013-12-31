@@ -3,7 +3,7 @@ Monte-Carlo-Money-Jar
 
 Program to see how fast loose change piles up over a one year period.
 
-To run the program:
+To run the program (Using Python 2.7):
 
 from command line:
 
